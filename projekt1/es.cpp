@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-
+#include <algorithm>
 
 const int TAG = 0;
 const int UNDEFINED = -1;
@@ -53,9 +53,19 @@ int main(int argc, char *argv[])
     		{ // ignores EOF
     			break;
     		}
-    		std::cout << "Loaded number " << number << std::endl;
+    		//std::cout << "Loaded number " << number << std::endl;
     		numbers.push_back(number);
     	}
+
+    	std::vector<int> res(numbers);
+    	//print right order
+    	std::sort(res.begin(), res.end());
+    	for (std::vector<int>::iterator num = res.begin(); num != res.end(); num++)
+    	{
+    		std::cout << *num << " ";
+    	}
+    	std::cout << std::endl;
+
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
     	fInputFile.close();
@@ -86,7 +96,6 @@ int main(int argc, char *argv[])
     		else if (x == y && procId+1+procId < k)
     		{
    				++c;
-    			//std::cout << "Proc " << procId << " in iter " << k << " " << comparingSame << ": " << x <<" is greater or equal then " <<y<<std::endl;
     		}
     	}
 
@@ -127,8 +136,35 @@ int main(int argc, char *argv[])
 			}
     	}
     }
+    //std::cout << "My number is " << procId << " and value: " << z << std::endl;
 
-    std::cout << "My number is " << procId << " and value: " << z << std::endl;
+    std::vector<int> output;
+    for(int k=0; k < n; k++)
+    {
+    	if (procId == numProcs - 1)
+    	{ // output = z_n
+    		output.insert(output.begin(), z);
+    	}
+    	else
+    	{ // send z_i to next
+        	MPI_Send(&z, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
+        }
+
+        if (procId > 0)
+        { // z_i+1 = z_i
+			MPI_Recv(&z, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
+    	}
+    }
+
+    if (procId == numProcs-1)
+    {
+    	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
+    	{
+    		std::cout << *num << " ";
+    	}
+    	std::cout << std::endl;
+    }
+
     MPI_Finalize(); 
 	return 0;
 }
