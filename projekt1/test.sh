@@ -7,4 +7,4 @@ fi;
 mpic++ -o es es.cpp
 dd if=/dev/random bs=1 count=$numbers of=numbers
 mpirun -np `expr $numbers + 1` es
-rm -f es numbers
+#rm -f es numbers

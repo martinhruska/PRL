@@ -33,42 +33,30 @@ int main(int argc, char *argv[])
     int numProcs;
     int procId;
     MPI_Status stat;
-    std::vector<int> numbers;
+    std::vector<int> res;
  
     // Initialize MPI
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
+   	int n = 0;
+    int readNumber = 0;
+    std::fstream fInputFile;
+
     if (procId == 0)
     {
     	char fileName[] = "numbers";
-    	std::fstream fInputFile;
     	fInputFile.open(fileName, std::ios::in);
 
-    	while(fInputFile.good())
-    	{
-    		int number = fInputFile.get();
-    		if (!fInputFile.good())
-    		{ // ignores EOF
-    			break;
-    		}
-    		//std::cout << "Loaded number " << number << std::endl;
-    		numbers.push_back(number);
+        readNumber = fInputFile.get();
+    	if (fInputFile.good())
+    	{ // one char read
+            n=1;
+            res.push_back(readNumber); // OPTIONAL
     	}
 
-    	std::vector<int> res(numbers);
-    	//print right order
-    	std::sort(res.begin(), res.end());
-    	for (std::vector<int>::iterator num = res.begin(); num != res.end(); num++)
-    	{
-    		std::cout << *num << " ";
-    	}
-    	std::cout << std::endl;
-
-    	int inNumbersSize = numbers.size();
-    	sendToEveryoneInt(&inNumbersSize, numProcs);
-    	fInputFile.close();
+        sendToEveryoneInt(&n, numProcs);
     }
 
     // Initialize registers
@@ -77,13 +65,16 @@ int main(int argc, char *argv[])
    	int z = UNDEFINED;
    	int c = 1;
 
-   	int n = 0;
-
    	// get numbers of elements in read array
     MPI_Recv(&n, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
 
     for (int k=0; k < 2*n; k++)
     {
+        if (numProcs <= n)
+        {
+            break;
+        }
+
     	int h = getH(k, n);
 
     	if (x != UNDEFINED && y != UNDEFINED)
@@ -111,10 +102,23 @@ int main(int argc, char *argv[])
 
     	if (k < n && procId == 0)
     	{ // master reads a new number to y and sends it to x
-    		y = numbers[0];
-    		numbers.erase(numbers.begin());
+    		y = readNumber;
+
+            readNumber = fInputFile.get();
+    	    if (fInputFile.good())
+    	    { // another num read
+                n+=1;
+                res.push_back(readNumber); // OPTIONAL
+    	    }
+    	    sendToEveryoneInt(&n, numProcs);
 	        MPI_Send(&y, 1, MPI_INT, k, TAG, MPI_COMM_WORLD);
     	}
+        
+        if (k < n)
+        {  // update n
+            MPI_Recv(&n, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+        }
+
     	if (k < n && k == procId)
     	{ // x_k = nextinput
 			MPI_Recv(&x, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
@@ -136,7 +140,6 @@ int main(int argc, char *argv[])
 			}
     	}
     }
-    //std::cout << "My number is " << procId << " and value: " << z << std::endl;
 
     std::vector<int> output;
     for(int k=0; k < n; k++)
@@ -156,7 +159,7 @@ int main(int argc, char *argv[])
     	}
     }
 
-    if (procId == numProcs-1)
+    if (procId == numProcs-1 && numProcs > n)
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
     	{
@@ -164,7 +167,28 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
+    else if (procId == numProcs-1 && numProcs <= n)
+    {
+        std::cerr  <<  "Not enough processors"  <<  std::endl;
+    }
 
-    MPI_Finalize(); 
+    if (procId == 0)
+    {
+        fInputFile.close();
+    }
+
+    // OPTIONAL
+    if (procId == 0)
+    {
+    	//print right order
+    	std::sort(res.begin(), res.end());
+    	for (std::vector<int>::iterator num = res.begin(); num != res.end(); num++)
+    	{
+    		std::cout << *num << " ";
+    	}
+    	std::cout << std::endl;
+    }
+
+    MPI_Finalize();
 	return 0;
 }
