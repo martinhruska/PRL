@@ -30,11 +30,39 @@ stručně popsán a bude provedene teoretická analýza jeho složitosti \ref{se
 následně budou popsány implementační detaily \ref{sec:impl},
 provedené experimenty \ref{sec:exprmts}
 a na závěr je uveden sekvenční diagrama znázorňující komunikaci jednotlivých procesorů \ref{sec:seq}.
-\cite{forester:home}
 
 \section{Popis a analýza algoritmu}
 \label{sec:analysis}
-Algoritmus zde bude popsán stručně a neformálně, podrobnější popis lze najít v \cite{prl:pred}.
+Algoritmus zde bude popsán stručně a neformálně (podrobnější popis lze najít v~\cite{prl:pred}),
+ale zároveň tak, aby z~tohoto popisu bylo možno dále provést analýzu složitosti algoritmu.
+Enumeration sort tedy pracuje následujícím způsobem:
+\begin{enumerate}
+\item Každý vstupní procesor má registry $X, Y, C, Z$ a registr $C$ na úvod nastaví
+na hodnotu jedna.
+\item Provádí se cyklus o~$2*n$ opakováních, kde v~prvních $k$ cyklech takových, že $k\leq n$,
+je $k$-tý prvek přirazen $k$-tému procesoru do registru $X$.
+Registry $Y$ postupně prochází vstupní posloupnost tak, že v~každém cyklu se posune prvek posloupnosti z~daného procesoru
+do jeho následníka v~poli procesorů a do prvního procesoru jsou takto nahrávány prvky vstupní posloupnosti.
+Procesory v~každém cyklu porovnají hodnoty v~registru $X$ a $Y$ (pokud mají tyto definovány)
+a pokud $X \leq Y$, tak inkrementují registr $C$ o~jedničku.
+V~každém $k$-tém cyklu (kde $k \geq n$) je pak přiřazena hodnota z~registru $X$ $k-n$-tého procesoru do registru $Z$ procesoru,
+jenž je v~poli procesorů na stejné pozici jako je daná hodnota v~seřazené posloupnosti.
+\item V~závěrečném kroku jsou pak v~cyklu hodnoty z~registru $Z$ přesouvány na výstup tak, že je hodnota
+z~registru $Z$ jednoho procesoru přenesena do registru $Z$ procesoru, který ho v~poli procesorů následuje.
+Z~posledního procesoru v~poli je pak přenesena tato hodnota na výstup.
+\end{enumerate}
+
+Nyní přistupme k~analýze časové složitosti algoritmu.
+První bod z~popisu algoritmu, tedy inicializace registru $C$ na hodnotu jedna je možno provést v~konstantním čase,
+zapsáno v~$O$ notaci jako $O(1)$.
+V~druhém bodě se proveden cyklus $2*n$-krát a každý krok cyklu lze provést v~konstantním počtu kroků, dohromady tedy
+má složitost $2*n*c=O(n)$, kde $c$ je konstanta udávající počet kroků výpočtu v~těle cyklu.
+Třetí bod je cyklus s~$n$ opakováními a každý cyklu lze provést také v~konstantním počtu kroků, celkem pak $n*c_2=O(n)$,
+kde $c$ je konstanta udávající počet kroků výpočtu v~těle cyklu.
+Celý výpočet má tedy časovou složitost $t(n)=O(1)+O(n)+O(n)=O(n)$.
+Počet procesorů nutných k~výpočtu je $n$, a tedy $p(n)=n$.
+Cena paralelního řešení $c(n)$ je $p(n)*t(n)=n*O(n)=O(n^2)$.
+
 
 \section{Implementace}
 \label{sec:impl}
