@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
     int readNumber = 0;
     std::fstream fInputFile;
 
+    double startTime = MPI::Wtime();
     if (procId == 0)
     {
     	char fileName[] = "numbers";
@@ -158,7 +159,13 @@ int main(int argc, char *argv[])
 			MPI_Recv(&z, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
     	}
     }
+    double endTime = MPI::Wtime();
+    if (procId == 0)
+    {
+        std::cout  << n  <<  " " <<   endTime - startTime  <<  std::endl;
+    }
 
+    /*
     if (procId == numProcs-1 && numProcs > n)
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
@@ -167,7 +174,8 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
-    else if (procId == numProcs-1 && numProcs <= n)
+    */
+    if (procId == numProcs-1 && numProcs <= n)
     {
         std::cerr  <<  "Not enough processors"  <<  std::endl;
     }
@@ -178,6 +186,7 @@ int main(int argc, char *argv[])
     }
 
     // OPTIONAL
+    /*
     if (procId == 0)
     {
     	//print right order
@@ -188,6 +197,7 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
+    */
 
     MPI_Finalize();
 	return 0;
