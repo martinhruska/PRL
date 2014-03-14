@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
     		numbers.push_back(number);
     	}
 
+        /*
     	std::vector<int> res(numbers);
     	//print right order
     	std::sort(res.begin(), res.end());
@@ -65,6 +66,7 @@ int main(int argc, char *argv[])
     		std::cout << *num << " ";
     	}
     	std::cout << std::endl;
+        */
 
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
@@ -82,6 +84,20 @@ int main(int argc, char *argv[])
    	// get numbers of elements in read array
     MPI_Recv(&n, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
 
+    // Not enought processors
+    if (numProcs <= n && procId == 0)
+    { // print error
+        std::cerr  <<  numProcs <<   " processors are not enough for "  <<  n  <<  " numbers"  <<  std::endl;
+    }
+    if (numProcs <= n)
+    { // end because of processor lack
+        MPI_Finalize(); 
+        return 0;
+    }
+
+    double startTime = MPI::Wtime();
+
+    // main sorting loop
     for (int k=0; k < 2*n; k++)
     {
     	int h = getH(k, n);
@@ -156,6 +172,13 @@ int main(int argc, char *argv[])
     	}
     }
 
+    double endTime = MPI::Wtime();
+
+    if (procId == 0)
+    {
+        std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
+    }
+/*
     if (procId == numProcs-1)
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
@@ -164,7 +187,7 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
-
+*/
     MPI_Finalize(); 
 	return 0;
 }

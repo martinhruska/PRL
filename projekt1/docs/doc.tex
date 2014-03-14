@@ -1,0 +1,52 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[left=1.5cm, text={18cm, 25cm}, top=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[czech]{babel}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{url}
+\usepackage{comment}
+\newcommand{\myuv}[1]{\quotedblbase #1\textquotedblleft}
+\newcommand{\defVal}[1]{$Default=#1$}
+
+\title{Implementace algoritmu Enumeration sort}
+\author{Martin Hruška\\xhrusk16@stud.fit.vutbr.cz}
+
+\date{}
+\begin{document}
+
+\maketitle
+
+\section{Úvod}
+\label{sec:intro}
+Enumeration sort je paralelní řadící algoritmus, který může pracovat s~procesory uspořádanými v~mřížce nebo v~lineárním poli.
+Tato práce se zabývá implementací varianty pro lineární pole procesorů, která řadí
+posloupnost obsahující $n$ přirozených čísel z~intervalu $<0,255>$ dle jejich velikosti za použití $n+1$ procesorů. 
+V~tomto dokumentu bude algoritmus napřed
+stručně popsán a bude provedene teoretická analýza jeho složitosti \ref{sec:analysis},
+následně budou popsány implementační detaily \ref{sec:impl},
+provedené experimenty \ref{sec:exprmts}
+a na závěr je uveden sekvenční diagrama znázorňující komunikaci jednotlivých procesorů \ref{sec:seq}.
+\cite{forester:home}
+
+\section{Popis a analýza algoritmu}
+\label{sec:analysis}
+Algoritmus zde bude popsán stručně a neformálně, podrobnější popis lze najít v \cite{prl:pred}.
+
+\section{Implementace}
+\label{sec:impl}
+
+
+\section{Experimenty}
+\label{sec:exprmts}
+
+\section{Sekvenční diagram}
+\label{sec:seq}
+
+\newpage
+\bibliography{literatura}
+\bibliographystyle{plain}
+\end{document}
