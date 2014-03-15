@@ -53,11 +53,11 @@ int main(int argc, char *argv[])
     		{ // ignores EOF
     			break;
     		}
-    		//std::cout << "Loaded number " << number << std::endl;
+    		//std::cerr << number  <<  " ";
     		numbers.push_back(number);
     	}
+        //std::cerr  <<  std::endl;
 
-        /*
     	std::vector<int> res(numbers);
     	//print right order
     	std::sort(res.begin(), res.end());
@@ -66,7 +66,6 @@ int main(int argc, char *argv[])
     		std::cout << *num << " ";
     	}
     	std::cout << std::endl;
-        */
 
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
@@ -176,9 +175,8 @@ int main(int argc, char *argv[])
 
     if (procId == 0)
     {
-        std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
+        //std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
     }
-/*
     if (procId == numProcs-1)
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
@@ -187,7 +185,6 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
-*/
     MPI_Finalize(); 
 	return 0;
 }

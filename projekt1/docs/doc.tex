@@ -24,7 +24,8 @@
 \label{sec:intro}
 Enumeration sort je paralelní řadící algoritmus, který může pracovat s~procesory uspořádanými v~mřížce nebo v~lineárním poli.
 Tato práce se zabývá implementací varianty pro lineární pole procesorů, která řadí
-posloupnost obsahující $n$ přirozených čísel z~intervalu $<0,255>$ dle jejich velikosti za použití $n+1$ procesorů. 
+posloupnost obsahující $n$ přirozených čísel z~intervalu $<0,255>$ dle jejich velikosti za použití $n+1$ procesorů.
+Pro implementaci byla použita knihovna \emph{openMPI}.
 V~tomto dokumentu bude algoritmus napřed
 stručně popsán a bude provedene teoretická analýza jeho složitosti \ref{sec:analysis},
 následně budou popsány implementační detaily \ref{sec:impl},
@@ -44,7 +45,7 @@ je $k$-tý prvek přirazen $k$-tému procesoru do registru $X$.
 Registry $Y$ postupně prochází vstupní posloupnost tak, že v~každém cyklu se posune prvek posloupnosti z~daného procesoru
 do jeho následníka v~poli procesorů a do prvního procesoru jsou takto nahrávány prvky vstupní posloupnosti.
 Procesory v~každém cyklu porovnají hodnoty v~registru $X$ a $Y$ (pokud mají tyto definovány)
-a pokud $X \leq Y$, tak inkrementují registr $C$ o~jedničku.
+a pokud $X < Y$, tak inkrementují registr $C$ o~jedničku.
 V~každém $k$-tém cyklu (kde $k \geq n$) je pak přiřazena hodnota z~registru $X$ $k-n$-tého procesoru do registru $Z$ procesoru,
 jenž je v~poli procesorů na stejné pozici jako je daná hodnota v~seřazené posloupnosti.
 \item V~závěrečném kroku jsou pak v~cyklu hodnoty z~registru $Z$ přesouvány na výstup tak, že je hodnota
@@ -66,10 +67,46 @@ Cena paralelního řešení $c(n)$ je $p(n)*t(n)=n*O(n)=O(n^2)$.
 
 \section{Implementace}
 \label{sec:impl}
+Při samotné implementaci byl respektován algoritmus tak, jak by popsán předchozí části \ref{sec:analysis}, až na změny či upřesnění popsané v~této části.
 
+Vstupní posloupnost čísel program načítá ze souboru \emph{numbers}, kde je uložena jako sekvence bytů.
+Proto existovaly dvě možnosti implementace samotného algoritmu.
+V~první by probíhalo samotné načítání hodnot ze souboru během cyklu algoritmu prvním (master) procesorem.
+Tento přístup by ale byl nevhodný pro další měření rychlosti algoritmu, protože ta by byla
+zkreslena režií spojenou s~načítáním dat ze souboru a průběžným zasíláním zpráv s~aktuálním počtem hodnot
+ve vstupní posloupnosti ostatním procesorům.
+Toto bylo potvrzeno implementací a experimenty.
+Proto byla implementace provedena druhým způsobem, při němž první procesor načte všechny prvky posloupnosti,
+informuje o~jejich počtu ostatní procesory a při samotném řazení posloupnosti jsou pak hodnoty čteny přímo z~paměti.
+
+Samotný algoritmu Enumeration sort byl upraven tak, aby byl schopen řadit posloupnosti i se stejnými čísly.
+Toho bylo dosaženo tak, že v~druhém kroku algoritmu (viz. sekce \ref{sec:analysis}) není provedeno
+porovnání $X<Y$, ale $X \leq Y$ pro všechna čísla, která jsem ve vstupní posloupnosti na pozici s~pořadovým
+číslem větším, než je pořadové číslo procesoru v~poli procesorů.
 
 \section{Experimenty}
 \label{sec:exprmts}
+Vytvořeným programem byly následně provedeny experimenty s~posloupnostmi o~různé délce, tak aby bylo
+možné porovnání s~teoreticky odvozenou složitostí výpočtu.
+Experimenty byly provedeny na počítači \emph{merlin.fit.vutbr.cz} a měřeno bylo pomocí
+funkce $MPI:Wtime$.
+Délka posloupnosti byla dle doporučení z~předchozího projektu omezena na $20$ prvků, jelikož při
+větší délce nebyly výsledky kvůli systémovým omezením relevantní (ověřeno experimentálně, při delších
+posloupnostech měly měřené časy výrazné odchylky).
+Experiment byl proveden s~vědomím omezené relevance výsledků při měření výkonů na takto malé vzorku dat.
+Provedené měření lze vidět na obrázku \ref{fig:exp}.
+Na grafu jsou červené body udávající reálnou dobu v~sekundách (osa y) nutnou pro seřazení
+posloupnosti (osa x).
+Zeleně je pak přímka znázorňující funkci $0.0003*n-0.001$, která ilustruje
+časovou složitost $O(n)$, jež by měl mít algoritmus teoreticky.
+Z~grafu je patrné, že časová náročnost implementace se také drží v~lineárním čase.
+
+\begin{figure}
+\includegraphics[width=15cm,keepaspectratio]{plots/perf.png}
+\caption{Doba v~sekundách nutná pro seřazení posloupnosti v~závislosti na její délce.}
+\end{figure}
+\label{fig:exp}
+
 
 \section{Sekvenční diagram}
 \label{sec:seq}
