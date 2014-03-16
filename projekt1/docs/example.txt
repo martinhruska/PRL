@@ -1,0 +1,30 @@
+Master:CPU
+i:CPU
+i+1:CPU
+ostatni: CPU
+
+Master:i+1.Delka vstupu n
+Master:i.Delka vstupu n
+
+[c:loop 0 <= k < n]
+  i:i+1.Y(i) -> Y(i+1)
+    [c: i == k]
+	Master:i.Vstupni hodnota -> X(k)      
+    [/c]
+
+[/c]
+[c:loop n <= k < 2*n]
+    [c: i >= k-n]
+    i:i+1.Y(i) -> Y(i+1)
+    [/c]
+    [c: i = k-n]
+    i:ostatni.C(k-n)
+    [/c]
+    [c: i = C(k-n)]
+    ostatni:i.x(k-n) -> z(c(k-n))
+    [/c]
+[/c]
+
+[c:loop 0 <= k < n]
+    i:i+1.Z(i) -> Z(i+1)
+[/c]

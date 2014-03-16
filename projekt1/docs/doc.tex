@@ -27,10 +27,10 @@ Tato práce se zabývá implementací varianty pro lineární pole procesorů, k
 posloupnost obsahující $n$ přirozených čísel z~intervalu $<0,255>$ dle jejich velikosti za použití $n+1$ procesorů.
 Pro implementaci byla použita knihovna \emph{openMPI}.
 V~tomto dokumentu bude algoritmus napřed
-stručně popsán a bude provedene teoretická analýza jeho složitosti \ref{sec:analysis},
+stručně popsán a bude provedena teoretická analýza jeho složitosti \ref{sec:analysis},
 následně budou popsány implementační detaily \ref{sec:impl},
 provedené experimenty \ref{sec:exprmts}
-a na závěr je uveden sekvenční diagrama znázorňující komunikaci jednotlivých procesorů \ref{sec:seq}.
+a na závěr je uveden sekvenční diagram znázorňující komunikaci jednotlivých procesorů \ref{sec:seq}.
 
 \section{Popis a analýza algoritmu}
 \label{sec:analysis}
@@ -41,7 +41,7 @@ Enumeration sort tedy pracuje následujícím způsobem:
 \item Každý vstupní procesor má registry $X, Y, C, Z$ a registr $C$ na úvod nastaví
 na hodnotu jedna.
 \item Provádí se cyklus o~$2*n$ opakováních, kde v~prvních $k$ cyklech takových, že $k\leq n$,
-je $k$-tý prvek přirazen $k$-tému procesoru do registru $X$.
+je $k$-tý prvek přiřazen $k$-tému procesoru do registru $X$.
 Registry $Y$ postupně prochází vstupní posloupnost tak, že v~každém cyklu se posune prvek posloupnosti z~daného procesoru
 do jeho následníka v~poli procesorů a do prvního procesoru jsou takto nahrávány prvky vstupní posloupnosti.
 Procesory v~každém cyklu porovnají hodnoty v~registru $X$ a $Y$ (pokud mají tyto definovány)
@@ -89,7 +89,9 @@ porovnání $X<Y$, ale $X \leq Y$ pro všechna čísla, která jsem ve vstupní 
 Vytvořeným programem byly následně provedeny experimenty s~posloupnostmi o~různé délce, tak aby bylo
 možné porovnání s~teoreticky odvozenou složitostí výpočtu.
 Experimenty byly provedeny na počítači \emph{merlin.fit.vutbr.cz} a měřeno bylo pomocí
-funkce $MPI:Wtime$.
+funkce $MPI:Wtime$, která byla volána před samotným začátkem řazení (tedy až po načtení vstupní posloupnosti ze souboru)
+a také po seřazení a uložení výsledku do výstupní posloupnosti.
+Obě hodnoty byly od sebe následně odečteny a tím byla získána doba řazení.
 Délka posloupnosti byla dle doporučení z~předchozího projektu omezena na $20$ prvků, jelikož při
 větší délce nebyly výsledky kvůli systémovým omezením relevantní (ověřeno experimentálně, při delších
 posloupnostech měly měřené časy výrazné odchylky).
@@ -110,6 +112,21 @@ Z~grafu je patrné, že časová náročnost implementace se také drží v~line
 
 \section{Sekvenční diagram}
 \label{sec:seq}
+Na sekvenčním diagramu \ref{seq} je znázorněna komunikace mezi procesory.
+Proměnná $i$ udává pořadové číslo procesoru v~poli procesorů a \emph{ostatní}
+představují ostatní procesory (existují-li takové) v~poli procesorů.
+\begin{figure}
+\includegraphics[width=15cm,keepaspectratio]{seq.pdf}
+\caption{Sekvenční diagram znázorňující komunikaci mezi procesory}
+\end{figure}
+\label{fig:seq}
+
+\section{Závěr}
+Byl implementován algoritmus Enumeration sort s~lineárním polem procesorů a s~touto implementací byly provedeny
+experimenty a měření její časové náročnosti, která byla poté porovnána s~teoreticky odvozenou časovou složitostí.
+Bylo zjištěno, že rychlost implementace odpovídá teoretické analýze složitosti.
+
+Součástí práce je také sekvenční diagram popisující komunikační protokol implementovaného algoritmu.
 
 \newpage
 \bibliography{literatura}
