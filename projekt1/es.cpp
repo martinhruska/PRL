@@ -2,7 +2,6 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <algorithm>
 
 const int TAG = 0;
 const int UNDEFINED = -1;
@@ -54,18 +53,11 @@ int main(int argc, char *argv[])
     			break;
     		}
     		numbers.push_back(number);
-            //std::cout  << number  <<   " ";
-    	}
-    	//std::cout << std::endl;
-    	std::vector<int> res(numbers);
-    	//print right order
-    	std::sort(res.begin(), res.end());
-    	for (std::vector<int>::iterator num = res.begin(); num != res.end(); num++)
-    	{
-    		std::cout << *num << " ";
+            std::cout  << number  <<   " ";
     	}
     	std::cout << std::endl;
-        
+    	std::vector<int> res(numbers);
+    
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
     	fInputFile.close();
@@ -191,9 +183,8 @@ int main(int argc, char *argv[])
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
     	{
-    		std::cout << *num << " ";
+    		std::cout << *num << std::endl;
     	}
-    	std::cout << std::endl;
     }
     
     MPI_Finalize(); 
