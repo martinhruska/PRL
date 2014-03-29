@@ -34,8 +34,8 @@ a na závěr je uveden sekvenční diagram znázorňující komunikaci jednotliv
 
 \section{Popis a analýza algoritmu}
 \label{sec:analysis}
-Algoritmus zde bude popsán stručně a neformálně (podrobnější popis lze najít v~\cite{prl:pred}),
-ale zároveň tak, aby z~tohoto popisu bylo možno dále provést analýzu složitosti algoritmu.
+Algoritmus zde bude popsán stručně,
+ale zároveň dostatečně přesně na to, aby z~tohoto popisu bylo možno dále provést analýzu složitosti algoritmu.
 Enumeration sort tedy pracuje následujícím způsobem:
 \begin{enumerate}
 \item Každý vstupní procesor má registry $X, Y, C, Z$ a registr $C$ na úvod nastaví
@@ -86,49 +86,49 @@ porovnání $X<Y$, ale $X \leq Y$ pro všechna čísla, která jsem ve vstupní 
 
 \section{Experimenty}
 \label{sec:exprmts}
-Vytvořeným programem byly následně provedeny experimenty s~posloupnostmi o~různé délce, tak aby bylo
-možné porovnání s~teoreticky odvozenou složitostí výpočtu.
-Experimenty byly provedeny na počítači \emph{merlin.fit.vutbr.cz} a měřeno bylo pomocí
-funkce $MPI:Wtime$, která byla volána před samotným začátkem řazení (tedy až po načtení vstupní posloupnosti ze souboru)
-a také po seřazení a uložení výsledku do výstupní posloupnosti.
-Obě hodnoty byly od sebe následně odečteny a tím byla získána doba řazení.
-Délka posloupnosti byla dle doporučení z~předchozího projektu omezena na $20$ prvků, jelikož při
-větší délce nebyly výsledky kvůli systémovým omezením relevantní (ověřeno experimentálně, při delších
-posloupnostech měly měřené časy výrazné odchylky).
-Experiment byl proveden s~vědomím omezené relevance výsledků při měření výkonů na takto malé vzorku dat.
-Provedené měření lze vidět na obrázku \ref{fig:exp}.
-Na grafu jsou červené body udávající reálnou dobu v~sekundách (osa y) nutnou pro seřazení
-posloupnosti (osa x).
-Zeleně je pak přímka znázorňující funkci $0.0003*n-0.001$, která ilustruje
-časovou složitost $O(n)$, jež by měl mít algoritmus teoreticky.
-Z~grafu je patrné, že časová náročnost implementace se také drží v~lineárním čase.
 
-\begin{figure}
-\includegraphics[width=15cm,keepaspectratio]{plots/perf.png}
+\begin{figure}[bt]
+\begin{center}
+\includegraphics[scale=0.8]{plots/perf.png}
 \caption{Doba v~sekundách nutná pro seřazení posloupnosti v~závislosti na její délce.}
+\end{center}
 \end{figure}
 \label{fig:exp}
 
+S~vytvořeným programem byly následně provedeny experimenty s~posloupnostmi o~různé délce, tak aby bylo
+možné porovnání s~teoreticky odvozenou složitostí výpočtu.
+Experimenty byly provedeny na počítači \emph{merlin.fit.vutbr.cz} a čas byl měřen pomocí
+funkce $MPI:Wtime$, která byla volána napřed samotným začátkem řazení (tedy až po načtení vstupní posloupnosti ze souboru)
+a poté po seřazení a uložení výsledku do výstupní posloupnosti.
+Obě hodnoty byly od sebe následně odečteny a tím byla získána doba řazení.
+Délka posloupnosti byla dle doporučení z~předchozího projektu omezena na $20$ prvků, jelikož při
+větší délce nebyly výsledky kvůli systémovým omezením relevantní.
+%Experiment byl proveden s~vědomím omezené relevance výsledků při měření výkonů na takto malé vzorku dat.
+Provedené měření lze vidět na obrázku \ref{fig:exp}.
+Na grafu červené body udávají reálnou dobu v~sekundách, kterou program potřeboval pro seřazení
+posloupnosti o~zadaném počtu prvků.
+Zeleně je pak přímka znázorňující funkci $0.0003*n-0.001$, která ilustruje
+časovou složitost $O(n)$, jež by měl mít algoritmus teoreticky.
+Z~grafu je patrné, že časová náročnost implementace se také drží v~lineárním čase,
+a tudíž byl potvrzen teoretický odhad časové složitosti.
 
 \section{Sekvenční diagram}
 \label{sec:seq}
-Na sekvenčním diagramu \ref{seq} je znázorněna komunikace mezi procesory.
-Proměnná $i$ udává pořadové číslo procesoru v~poli procesorů a \emph{ostatní}
-představují ostatní procesory (existují-li takové) v~poli procesorů.
+Na sekvenčním diagramu na obrázku \ref{fig:seq} je znázorněna komunikace mezi procesory.
+Proměnné $i,j$ udávají pořadové číslo procesoru v~poli procesorů,
+procesor $0$ je na prvním místě v~poli procesorů
+a \emph{ostatní} představuje všechny procesory kromě i-tého procesoru.
+Pole procesorů použitých pro řazení je indexováno od nuly.
 \begin{figure}
-\includegraphics[width=15cm,keepaspectratio]{seq.pdf}
+\includegraphics[scale=0.7]{seq.png}
 \caption{Sekvenční diagram znázorňující komunikaci mezi procesory}
 \end{figure}
 \label{fig:seq}
 
 \section{Závěr}
 Byl implementován algoritmus Enumeration sort s~lineárním polem procesorů a s~touto implementací byly provedeny
-experimenty a měření její časové náročnosti, která byla poté porovnána s~teoreticky odvozenou časovou složitostí.
-Bylo zjištěno, že rychlost implementace odpovídá teoretické analýze složitosti.
+experimenty s~měřenín časové náročnosti výpočtu. Ta byla poté porovnána s~teoreticky odvozenou časovou složitostí a
+bylo zjištěno, že rychlost implementace odpovídá teoretické analýze složitosti.
+V~práci je také uveden sekvenční diagram popisující komunikační protokol implementovaného algoritmu.
 
-Součástí práce je také sekvenční diagram popisující komunikační protokol implementovaného algoritmu.
-
-\newpage
-\bibliography{literatura}
-\bibliographystyle{plain}
 \end{document}

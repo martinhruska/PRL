@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
     		numbers.push_back(number);
     	}
         //std::cerr  <<  std::endl;
-        /*
     	std::vector<int> res(numbers);
     	//print right order
     	std::sort(res.begin(), res.end());
@@ -66,7 +65,6 @@ int main(int argc, char *argv[])
     		std::cout << *num << " ";
     	}
     	std::cout << std::endl;
-        */
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
     	fInputFile.close();
@@ -133,10 +131,10 @@ int main(int argc, char *argv[])
         //std::cerr  <<  procId  << " at "  << k <<   " 3"  <<  std::endl;
     	if (k < n && procId == masterCpu)
     	{ // master reads a new number to y and sends it to x
-    		y = numbers[0];
+    		int actNum = numbers[0];
     		numbers.erase(numbers.begin());
-	        MPI_Send(&y, 1, MPI_INT, firstCpu, TAG, MPI_COMM_WORLD);
-	        MPI_Send(&y, 1, MPI_INT, currentCpu, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&actNum, 1, MPI_INT, firstCpu, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&actNum, 1, MPI_INT, currentCpu, TAG, MPI_COMM_WORLD);
     	}
         //std::cerr  <<  procId  << " at "  << k <<   " waiting for receiving"  <<  std::endl;
         
@@ -177,7 +175,7 @@ int main(int argc, char *argv[])
     //std::cout << "My number is " << procId << " and value: " << z << std::endl;
 
     std::vector<int> output;
-    for(int k=0; k < n; k++)
+    for(int k=1; k <= n; k++)
     {
     	if (procId == numProcs - 1)
     	{ // output = z_n
@@ -196,11 +194,12 @@ int main(int argc, char *argv[])
 
     double endTime = MPI::Wtime();
 
+    /*
     if (procId == 0)
     {
         std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
     }
-    /*
+    */
     if (procId == numProcs-1)
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
@@ -209,7 +208,7 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
-    */
+    
     MPI_Finalize(); 
 	return 0;
 }

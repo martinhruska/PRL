@@ -1,0 +1,34 @@
+Master:CPU
+0: CPU
+i: CPU
+i+1: CPU
+ostatni: CPU
+j: CPU
+
+Master:i.Delka vstupu n všem CPU
+
+[c:loop 0 <= k < n]
+  [c: i >= k-n]
+    i:i+1.Y(i) -> Y(i+1)
+  [/c]
+  Master:0.Input(k) -> Y(1) 
+    [c: i == k]
+	Master:i.Input(k) -> X(i)      
+    [/c]
+
+[/c]
+[c:loop n <= k < 2*n]
+    [c: i >= k-n]
+    i:i+1.Y(i) -> Y(i+1)
+    [/c]
+    [c: i = k-n]
+    i:ostatni.Vybere C(k-n)-tý CPU pro zaslání hodnoty x(k-n)
+    [/c]
+    [c: i = k-n && j = c(k-n)]
+    i:j.x(k-n) -> z(c(k-n))
+    [/c]
+[/c]
+
+[c:loop 0 <= k < n]
+    i:i+1.Z(i) -> Z(i+1)
+[/c]
