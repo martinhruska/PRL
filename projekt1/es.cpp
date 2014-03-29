@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     		numbers.push_back(number);
     	}
         //std::cerr  <<  std::endl;
-
+        /*
     	std::vector<int> res(numbers);
     	//print right order
     	std::sort(res.begin(), res.end());
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     		std::cout << *num << " ";
     	}
     	std::cout << std::endl;
-
+        */
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
     	fInputFile.close();
@@ -96,11 +96,15 @@ int main(int argc, char *argv[])
 
     double startTime = MPI::Wtime();
 
+    int masterCpu = 0;
+    int firstCpu = 1;
     // main sorting loop
     for (int k=0; k < 2*n; k++)
     {
-    	int h = getH(k, n);
+        int currentCpu = k+firstCpu;
+    	int h = getH(currentCpu, n);
 
+        //std::cerr  <<  procId  << " at "  << k <<   " 1"  <<  std::endl;
     	if (x != UNDEFINED && y != UNDEFINED)
     	{
     	 	if (x > y)
@@ -108,48 +112,67 @@ int main(int argc, char *argv[])
     			++c;
     		}
     		// this solves problem with equal numbers
-    		else if (x == y && procId+1+procId < k)
+    		else if (x == y && 2*procId < currentCpu)
     		{
    				++c;
     		}
     	}
 
+        //std::cerr  <<  procId  << " at "  << k <<   " 2"  <<  std::endl;
     	if (procId >= h && procId < numProcs-1)
     	{ // y_i sends its value to its neighbour
 	        MPI_Send(&y, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
     	}
 
+        //std::cerr  <<  procId  << " at "  << k <<   " 2.5"  <<  std::endl;
     	if (procId >= h+1 && procId < numProcs)
     	{ // y_i+1 receive message
 			MPI_Recv(&y, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
     	}
 
-    	if (k < n && procId == 0)
+        //std::cerr  <<  procId  << " at "  << k <<   " 3"  <<  std::endl;
+    	if (k < n && procId == masterCpu)
     	{ // master reads a new number to y and sends it to x
     		y = numbers[0];
     		numbers.erase(numbers.begin());
-	        MPI_Send(&y, 1, MPI_INT, k, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&y, 1, MPI_INT, firstCpu, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&y, 1, MPI_INT, currentCpu, TAG, MPI_COMM_WORLD);
     	}
-    	if (k < n && k == procId)
+        //std::cerr  <<  procId  << " at "  << k <<   " waiting for receiving"  <<  std::endl;
+        
+        if (k < n && firstCpu == procId)
+        {
+            //std::cerr <<  procId  << " at "  << k <<   " FIRST waits"  <<  std::endl;
+			MPI_Recv(&y, 1, MPI_INT, masterCpu, TAG, MPI_COMM_WORLD, &stat);
+        }
+        
+        //std::cerr  <<  procId  << " at "  << k <<   " received"  <<  std::endl;
+    	if (k < n && currentCpu == procId)
     	{ // x_k = nextinput
-			MPI_Recv(&x, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+			MPI_Recv(&x, 1, MPI_INT, masterCpu, TAG, MPI_COMM_WORLD, &stat);
     	}
+        //std::cerr  <<  procId  << " at "  << k <<   " 4"  <<  std::endl;
     	if (k >= n)
     	{
-    		if (procId == k - n)
+            //std::cerr  <<  procId  << " at "  << k <<   " 4.2: "  << currentCpu << " " <<  currentCpu-n << " "  << procId <<  std::endl;
+    		if (procId == currentCpu - n)
     		{ // send C_{k-n}
+                //std::cerr  <<  procId  << " at "  << k <<   " 4.5"  <<  std::endl;
     			sendToEveryoneInt(&c, numProcs);
 	        	MPI_Send(&x, 1, MPI_INT, c, TAG, MPI_COMM_WORLD);
     		}
 
     		// get ID of x_{k-n} receiver 
 			int recId;
-			MPI_Recv(&recId, 1, MPI_INT, k-n, TAG, MPI_COMM_WORLD, &stat);
+            //std::cerr  <<  procId  << " at "  << k <<   " 5"  <<  std::endl;
+			MPI_Recv(&recId, 1, MPI_INT, currentCpu-n, TAG, MPI_COMM_WORLD, &stat);
+            //std::cerr  <<  procId  << " at "  << k <<   " 6"  <<  std::endl;
 			if (recId == procId)
 			{ // receive x_{k-n}
-				MPI_Recv(&z, 1, MPI_INT, k-n, TAG, MPI_COMM_WORLD, &stat);
+				MPI_Recv(&z, 1, MPI_INT, currentCpu-n, TAG, MPI_COMM_WORLD, &stat);
 			}
     	}
+        //std::cerr  <<  procId  << " at "  << k <<   " end of cycle"  <<  std::endl;
     }
     //std::cout << "My number is " << procId << " and value: " << z << std::endl;
 
@@ -175,8 +198,9 @@ int main(int argc, char *argv[])
 
     if (procId == 0)
     {
-        //std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
+        std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
     }
+    /*
     if (procId == numProcs-1)
     {
     	for (std::vector<int>::iterator num = output.begin(); num != output.end(); num++)
@@ -185,6 +209,7 @@ int main(int argc, char *argv[])
     	}
     	std::cout << std::endl;
     }
+    */
     MPI_Finalize(); 
 	return 0;
 }
