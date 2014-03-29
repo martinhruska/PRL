@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
     /*
     if (procId == 0)
     {
-        std::cout  <<  numProcs  <<  " "  <<  endTime - startTime  <<  std::endl;
+        std::cout  <<  numProcs-1  <<  " "  <<  endTime - startTime  <<  std::endl;
     }
     */
     if (procId == numProcs-1)
