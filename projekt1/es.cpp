@@ -53,10 +53,10 @@ int main(int argc, char *argv[])
     		{ // ignores EOF
     			break;
     		}
-    		//std::cerr << number  <<  " ";
     		numbers.push_back(number);
+            //std::cout  << number  <<   " ";
     	}
-        //std::cerr  <<  std::endl;
+    	//std::cout << std::endl;
     	std::vector<int> res(numbers);
     	//print right order
     	std::sort(res.begin(), res.end());
@@ -65,6 +65,7 @@ int main(int argc, char *argv[])
     		std::cout << *num << " ";
     	}
     	std::cout << std::endl;
+        
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
     	fInputFile.close();
@@ -102,7 +103,6 @@ int main(int argc, char *argv[])
         int currentCpu = k+firstCpu;
     	int h = getH(currentCpu, n);
 
-        //std::cerr  <<  procId  << " at "  << k <<   " 1"  <<  std::endl;
     	if (x != UNDEFINED && y != UNDEFINED)
     	{
     	 	if (x > y)
@@ -116,19 +116,16 @@ int main(int argc, char *argv[])
     		}
     	}
 
-        //std::cerr  <<  procId  << " at "  << k <<   " 2"  <<  std::endl;
     	if (procId >= h && procId < numProcs-1)
     	{ // y_i sends its value to its neighbour
 	        MPI_Send(&y, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
     	}
 
-        //std::cerr  <<  procId  << " at "  << k <<   " 2.5"  <<  std::endl;
     	if (procId >= h+1 && procId < numProcs)
     	{ // y_i+1 receive message
 			MPI_Recv(&y, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
     	}
 
-        //std::cerr  <<  procId  << " at "  << k <<   " 3"  <<  std::endl;
     	if (k < n && procId == masterCpu)
     	{ // master reads a new number to y and sends it to x
     		int actNum = numbers[0];
@@ -136,43 +133,33 @@ int main(int argc, char *argv[])
 	        MPI_Send(&actNum, 1, MPI_INT, firstCpu, TAG, MPI_COMM_WORLD);
 	        MPI_Send(&actNum, 1, MPI_INT, currentCpu, TAG, MPI_COMM_WORLD);
     	}
-        //std::cerr  <<  procId  << " at "  << k <<   " waiting for receiving"  <<  std::endl;
         
         if (k < n && firstCpu == procId)
         {
-            //std::cerr <<  procId  << " at "  << k <<   " FIRST waits"  <<  std::endl;
 			MPI_Recv(&y, 1, MPI_INT, masterCpu, TAG, MPI_COMM_WORLD, &stat);
         }
         
-        //std::cerr  <<  procId  << " at "  << k <<   " received"  <<  std::endl;
     	if (k < n && currentCpu == procId)
     	{ // x_k = nextinput
 			MPI_Recv(&x, 1, MPI_INT, masterCpu, TAG, MPI_COMM_WORLD, &stat);
     	}
-        //std::cerr  <<  procId  << " at "  << k <<   " 4"  <<  std::endl;
     	if (k >= n)
     	{
-            //std::cerr  <<  procId  << " at "  << k <<   " 4.2: "  << currentCpu << " " <<  currentCpu-n << " "  << procId <<  std::endl;
     		if (procId == currentCpu - n)
     		{ // send C_{k-n}
-                //std::cerr  <<  procId  << " at "  << k <<   " 4.5"  <<  std::endl;
     			sendToEveryoneInt(&c, numProcs);
 	        	MPI_Send(&x, 1, MPI_INT, c, TAG, MPI_COMM_WORLD);
     		}
 
     		// get ID of x_{k-n} receiver 
 			int recId;
-            //std::cerr  <<  procId  << " at "  << k <<   " 5"  <<  std::endl;
 			MPI_Recv(&recId, 1, MPI_INT, currentCpu-n, TAG, MPI_COMM_WORLD, &stat);
-            //std::cerr  <<  procId  << " at "  << k <<   " 6"  <<  std::endl;
 			if (recId == procId)
 			{ // receive x_{k-n}
 				MPI_Recv(&z, 1, MPI_INT, currentCpu-n, TAG, MPI_COMM_WORLD, &stat);
 			}
     	}
-        //std::cerr  <<  procId  << " at "  << k <<   " end of cycle"  <<  std::endl;
     }
-    //std::cout << "My number is " << procId << " and value: " << z << std::endl;
 
     std::vector<int> output;
     for(int k=1; k <= n; k++)
