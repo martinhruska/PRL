@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
     for (int k=0; k < 2*n; k++)
     {
     	int h = getH(k, n);
+        int currentProc = k;
 
     	if (x != UNDEFINED && y != UNDEFINED)
     	{
@@ -114,7 +115,7 @@ int main(int argc, char *argv[])
     		}
     	}
 
-    	if (procId >= h && procId < numProcs-1)
+    	if (procId >= h && procId < numProcs-1 && procId >= 1)
     	{ // y_i sends its value to its neighbour
 	        MPI_Send(&y, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
     	}
@@ -125,18 +126,25 @@ int main(int argc, char *argv[])
     	}
 
     	if (k < n && procId == 0)
-    	{ // master reads a new number to y and sends it to x
+    	{ // master reads a new number to y and sends it to x of the k-th cpu
     		y = numbers[0];
     		numbers.erase(numbers.begin());
-	        MPI_Send(&y, 1, MPI_INT, k, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&y, 1, MPI_INT, 1, TAG, MPI_COMM_WORLD);
     	}
-    	if (k < n && k == procId)
+        /*
+        if (k < n && procId == 1)
+        { // y_1  receives new input
+			MPI_Recv(&y, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+        }
+        */
+
+    	if (k < n && currentProc == procId)
     	{ // x_k = nextinput
 			MPI_Recv(&x, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
     	}
     	if (k >= n)
     	{
-    		if (procId == k - n)
+    		if (procId == currentProc -n)
     		{ // send C_{k-n}
     			sendToEveryoneInt(&c, numProcs);
 	        	MPI_Send(&x, 1, MPI_INT, c, TAG, MPI_COMM_WORLD);
@@ -144,17 +152,17 @@ int main(int argc, char *argv[])
 
     		// get ID of x_{k-n} receiver 
 			int recId;
-			MPI_Recv(&recId, 1, MPI_INT, k-n, TAG, MPI_COMM_WORLD, &stat);
+			MPI_Recv(&recId, 1, MPI_INT, currentProc-n, TAG, MPI_COMM_WORLD, &stat);
 			if (recId == procId)
 			{ // receive x_{k-n}
-				MPI_Recv(&z, 1, MPI_INT, k-n, TAG, MPI_COMM_WORLD, &stat);
+				MPI_Recv(&z, 1, MPI_INT, currentProc-n, TAG, MPI_COMM_WORLD, &stat);
 			}
     	}
     }
     //std::cout << "My number is " << procId << " and value: " << z << std::endl;
 
     std::vector<int> output;
-    for(int k=0; k < n; k++)
+    for(int k=1; k < n+1; k++)
     {
     	if (procId == numProcs - 1)
     	{ // output = z_n
