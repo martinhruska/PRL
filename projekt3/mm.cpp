@@ -33,7 +33,21 @@ int main(int argc, char *argv[])
 
     if (procId == 0)
     { // master reads input
+    	while(fInputFile.good())
+    	{
+    		int number = fInputFile.get();
+    		if (!fInputFile.good())
+    		{ // ignores EOF
+    			break;
+    		}
+    		numbers.push_back(number);
+            std::cout  << number  <<   " ";
+    	}
+    	std::cout << std::endl;
+ 
     }
+
+    double startTime = MPI::Wtime();
 
     
     
