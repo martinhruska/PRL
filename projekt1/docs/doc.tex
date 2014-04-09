@@ -24,13 +24,13 @@
 \label{sec:intro}
 Enumeration sort je paralelní řadící algoritmus, který může pracovat s~procesory uspořádanými v~mřížce nebo v~lineárním poli.
 Tato práce se zabývá implementací varianty algoritmu pro lineární pole procesorů, která řadí
-posloupnost obsahující $n$ přirozených čísel z~intervalu $<0,255>$ dle jejich velikosti za použití $n+1$ procesorů.
-Pro implementaci byla použita knihovna \emph{openMPI}.
+posloupnost obsahující $n$ přirozených čísel z~intervalu $\langle 0,255 \rangle$ dle jejich velikosti za použití $n+1$ procesorů.
+Pro implementaci byla použita knihovna \emph{openMPI} a implementačním jazykem bylo C++.
 V~tomto dokumentu bude algoritmus napřed
 stručně popsán a bude provedena teoretická analýza jeho složitosti (sekce \ref{sec:analysis}),
 následně budou popsány v~sekci \ref{sec:impl} implementační detaily,
 v~sekci \ref{sec:exprmts} provedené experimenty
-a na závěr je uveden sekvenční diagram znázorňující komunikaci jednotlivých procesorů \ref{sec:seq}.
+a na závěr je uveden sekvenční diagram znázorňující komunikaci jednotlivých procesorů (sekce \ref{sec:seq}).
 
 \section{Popis a analýza algoritmu}
 \label{sec:analysis}
@@ -59,7 +59,7 @@ První bod z~popisu algoritmu, tedy inicializace registru $C$ na hodnotu jedna j
 zapsáno v~$O$ notaci jako $O(1)$.
 V~druhém bodě je proveden cyklus $2*n$-krát a každou iteraci cyklu lze provést v~konstantním počtu kroků, dohromady tedy
 dostáváme složitost $2*n*c=O(n)$, kde $c$ je konstanta udávající počet kroků výpočtu v~těle cyklu.
-Třetí bod je cyklus s~$n$ opakováními a každý cyklus lze provést také v~konstantním počtu kroků, celkem pak $n*c_2=O(n)$,
+Třetí bod je cyklus s~$n$ opakováními a každou iteraci cyklu lze provést také v~konstantním počtu kroků, celkem pak $n*c_2=O(n)$,
 kde $c_2$ je konstanta udávající počet kroků výpočtu v~těle cyklu.
 Celý výpočet má tedy časovou složitost $t(n)=O(1)+O(n)+O(n)=O(n)$.
 Počet procesorů nutných k~výpočtu je $n$, a tedy $p(n)=n$.
@@ -73,7 +73,7 @@ V~této sekci budou také popsány některé implementační detaily.
 
 Vstupní posloupnost čísel program načítá ze souboru \emph{numbers}, kde je uložena jako sekvence bytů.
 Proto existovaly dvě možnosti implementace samotného algoritmu.
-V~první by probíhalo samotné načítání hodnot ze souboru během cyklu algoritmu prvním (master) procesorem.
+V~první by probíhalo samotné načítání hodnot ze souboru během řadícího cyklu algoritmu prvním (master) procesorem.
 Tento přístup by ale byl nevhodný pro další měření rychlosti algoritmu, protože ta by byla
 zkreslena režií spojenou s~načítáním dat ze souboru a průběžným zasíláním zpráv s~aktuálním počtem načtených prvků
 vstupní posloupnosti ostatním procesorům, které tuto hodnotu potřebují znát kvůli cyklu prováděném v~druhém kroku algoritmu
@@ -102,24 +102,28 @@ Obě hodnoty byly od sebe následně odečteny a tím byla získána doba řazen
 Výsledky měření jsou zobrazeny v~grafu na obrázku \ref{fig:exp}.
 Červené body v~grafu udávají reálnou dobu v~sekundách, kterou program potřeboval pro seřazení
 posloupnosti o~daném počtu prvků.
-Zeleně je pak přímka znázorňující funkci $0.0003*n-0.001$, která ilustruje
+Zeleně je pak přímka znázorňující funkci $0.0004*n-0.001$, která ilustruje
 časovou složitost $O(n)$, jež by měl mít algoritmus teoreticky.
-Výsledky jsou průměrem z~pěti měření.
+Výsledky jsou průměrem z~deseti měření.
 
-Z~grafu je patrné, že pro posloupnosti, které obsahovaly $9$ až $25$ prvků, odpovídá formálně vypočtená časová složitost
+Z~grafu je patrné, že pro posloupnosti, které obsahovaly $6$ až $25$ prvků, odpovídá teoretická časová složitost
 experimentálně naměřeným hodnotám.
 U~posloupností s~větším počtem prvků než je $25$, mají naměřené hodnoty velký rozptyl, což lze připsat
-technickým limitům testovacího stroje, na němž bylo (v~1. projektu) doporučeno používat kolem $20$ procesorů, a tedy
+limitům (jak systémovým, tak výpočetním) testovacího stroje, na němž bylo (v~1. projektu) doporučeno používat kolem $20$ procesorů, a tedy
 i testovat posloupnosti o~délce kolem $20$ prvků.
-Toto tvrzení bylo také potvrzeno experimenty prováděnými s~posloupnostmi delšími než $35$ prvků (což je maximum zobrazené v~grafu),
+Toto bylo také potvrzeno experimenty prováděnými s~posloupnostmi delšími než $35$ prvků (což je maximum zobrazené v~grafu),
 u~nichž rozptyl výsledných časů akorát více rostl.
-Bohužel se nepodařilo zjistit, co je příčinou výrazné časové složitosti pro řazení posloupností s~menším počtem hodnot než $9$.
-Nicméně definici složitosti $O$ podobné chování neodporuje, jelikož má měřená funkce růst stejně rychle jako její asymptotický horní odhad
-až od určité délky vstupu $n$.
+Je také vidět, že u~malých posloupností, do délky $5$ prvků, byla doba výpočtu výrazně delší.
+Byly také provedeny experimenty, při nichž bylo pro tyto kratší posloupnosti použito většího počtu procesorů
+a doba výpočtu klesla na očekávané hodnoty.
+Přesnou příčinu tohoto jevu se bohužel nepodařilo zjistit, ale lze předpokládat, že se problém může nacházet na
+systémové úrovni a souvisí s~prioritou procesu při malém počtu procesorů.
+%Z hlediska definice horního odhadu časové složitosti $O$ ale musí platit,
+%že funkce časové složitosti roste danou rychlostí (v našem případě lineární) až od určitého hodnoty $n_0$,
+%tudíž by v tomto případě platilo $n_0=7$.
 
-Vzhledem k~omezeným výpočetním možnostem testovacího stroje se tedy nepodařilo korektně ověřit korespondenci mezi formální analýzou složitosti
-algoritmu a časovou náročností jeho implementace, jelikož testovací vzorek dat je na podobné tvrzení příliš malý.
-Ovšem na délce vstupní posloupnosti, kterou byl schopen počítač zpracovat, časová náročnost výpočtu teoretickému odhadu složitosti odpovídala.
+Vzhledem k~omezením daným testovacím strojem \emph{merlin} se tedy podařilo ověřit korespondenci mezi odvozenou složitosti
+algoritmu a časovou náročností jeho implementace pouze na menším vzorku dat, na němž časová složitost výpočtu rostla lineárně.
 
 \begin{figure}[bt]
 \begin{center}
@@ -147,9 +151,7 @@ Pole procesorů použitých pro řazení je v~diagramu indexováno od nuly a pro
 Byl implementován algoritmus Enumeration sort s~lineárním polem procesorů a s~touto implementací byly provedeny
 experimenty s~měřením časové náročnosti výpočtu.
 Ta byla poté porovnána s~teoreticky odvozenou časovou složitostí a
-bylo zjištěno, že rychlost implementace odpovídá teoretické analýze složitosti alespoň na vzorku dat, které je schopen testovací
-stroj zpracovat.
-Bohužel tento vzorek nebyl dostatečně velký na to, aby tvrzení mohlo mít obecnější platnost.
+bylo zjištěno, že rychlost implementace odpovídá teoretické analýze složitosti alespoň na omezeném vzorku dat.
 V~práci je také uveden sekvenční diagram popisující komunikační protokol implementovaného algoritmu.
 
 \end{document}

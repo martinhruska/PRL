@@ -1,3 +1,9 @@
+/**
+ * Enumeration sort algorithm implementation
+ * Author: Martin Hruska
+ * E-mail: xhrusk16@stud.fit.vutbr.cz
+ */
+
 #include <mpi.h>
 #include <fstream>
 #include <iostream>
@@ -40,7 +46,7 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
     if (procId == 0)
-    {
+    { // master reads input
     	char fileName[] = "numbers";
     	std::fstream fInputFile;
     	fInputFile.open(fileName, std::ios::in);
@@ -56,7 +62,6 @@ int main(int argc, char *argv[])
             std::cout  << number  <<   " ";
     	}
     	std::cout << std::endl;
-    	std::vector<int> res(numbers);
     
     	int inNumbersSize = numbers.size();
     	sendToEveryoneInt(&inNumbersSize, numProcs);
@@ -77,7 +82,8 @@ int main(int argc, char *argv[])
     // Not enought processors
     if (numProcs <= n && procId == 0)
     { // print error
-        std::cerr  <<  numProcs <<   " processors are not enough for "  <<  n  <<  " numbers"  <<  std::endl;
+        std::cerr  <<  numProcs <<   " processors are not enough for "  <<  n
+            <<  " numbers"  <<  std::endl;
     }
     if (numProcs <= n)
     { // end because of processor lack
@@ -127,7 +133,7 @@ int main(int argc, char *argv[])
     	}
         
         if (k < n && firstCpu == procId)
-        {
+        { // first cpu receives a new input value
 			MPI_Recv(&y, 1, MPI_INT, masterCpu, TAG, MPI_COMM_WORLD, &stat);
         }
         
