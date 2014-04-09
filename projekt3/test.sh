@@ -6,4 +6,4 @@ else
 fi;
 mpic++ --prefix /usr/local/share/OpenMPI -o mm mm.cpp
 mpirun --prefix /usr/local/share/OpenMPI -np `expr $numbers + 1` mm
-rm -f mm numbers
+rm -f mm

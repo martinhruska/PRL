@@ -5,6 +5,9 @@
  */
 
 #include <mpi.h>
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 const int TAG = 0;
 const int UNDEFINED = -1;
@@ -23,6 +26,7 @@ int main(int argc, char *argv[])
     int numProcs;
     int procId;
     MPI_Status stat;
+    std::vector<int> numbers;
  
     // Initialize MPI
     MPI_Init(&argc,&argv);
@@ -33,6 +37,10 @@ int main(int argc, char *argv[])
 
     if (procId == 0)
     { // master reads input
+    	char fileName[] = "numbers";
+    	std::fstream fInputFile;
+    	fInputFile.open(fileName, std::ios::in);
+
     	while(fInputFile.good())
     	{
     		int number = fInputFile.get();
