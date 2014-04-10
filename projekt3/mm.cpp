@@ -8,9 +8,12 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <math.h>
 
 const int TAG = 0;
 const int UNDEFINED = -1;
+
+typedef enum dtype {UNDEF=-1, P, S, G} DTYPE;
 
 void sendToEveryoneInt(int *what, int procs)
 {
@@ -20,13 +23,52 @@ void sendToEveryoneInt(int *what, int procs)
     }
 }
 
+int nand(int o1, int o2)
+{
+    return (o1-o2)*(o1-o2);
+}
+
+DTYPE initD(int X, int Y)
+{
+    if (X == 1 && Y == 1)
+        return G;
+    else if (X == 0 && Y == 0)
+        return S;
+    else
+        return P;
+}
+
+DTYPE opD(DTYPE o1, DTYPE o2)
+{
+    if (o1 == S)
+        return S;
+    else if (o1 == P)
+        return o2;
+    else if (o1 == G)
+        return G;
+}
+
+char trans(DTYPE d)
+{
+    if (d == S)
+        return 'S';
+    else if (d == P)
+        return 'P';
+    else if (d == G)
+        return 'G';
+}
 
 int main(int argc, char *argv[])
 {
+    typedef std::vector<int> Num;
     int numProcs;
     int procId;
     MPI_Status stat;
-    std::vector<int> numbers;
+    Num num1 = Num();
+    Num num2 = Num();
+
+    int lenNum1 = num1.size();
+    int lenNum2 = num2.size();
  
     // Initialize MPI
     MPI_Init(&argc,&argv);
@@ -40,6 +82,7 @@ int main(int argc, char *argv[])
     	char fileName[] = "numbers";
     	std::fstream fInputFile;
     	fInputFile.open(fileName, std::ios::in);
+        Num* actNum = &num1;
 
     	while(fInputFile.good())
     	{
@@ -48,14 +91,154 @@ int main(int argc, char *argv[])
     		{ // ignores EOF
     			break;
     		}
-    		numbers.push_back(number);
+
+            if (number == '\n')
+            { // end of line
+                actNum = &num2;
+                std::cout  <<  std::endl;
+                continue;
+            }
+
+    		actNum->push_back(number);
             std::cout  << number  <<   " ";
     	}
     	std::cout << std::endl;
- 
+        lenNum1 = num1.size();
+        lenNum2 = num2.size();
+        sendToEveryoneInt(&lenNum1, numProcs);
+        sendToEveryoneInt(&lenNum2, numProcs);
     }
 
-    double startTime = MPI::Wtime();
+	MPI_Recv(&lenNum1, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+	MPI_Recv(&lenNum2, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+
+    if (lenNum1 != lenNum2 || lenNum1+1 != numProcs)
+    {
+        if (procId == 0)
+        {
+            std::cerr  << "Wrong number of CPU or length of numbers is not same"  <<  std::endl;
+        }
+        MPI_Finalize();
+        return 0;
+    }
+
+    int X = UNDEFINED;
+    int Y = UNDEFINED;
+    DTYPE D = UNDEF;
+
+    if (procId == 0)
+    {
+        for (int i=1, j=lenNum1; i < numProcs; ++i,--j)
+        {
+	        MPI_Send(&num1[j-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&num2[j-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
+        }
+    }
+    else
+    {
+	    MPI_Recv(&X, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+	    MPI_Recv(&Y, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+        D = initD(X,Y);
+    }
+    //double startTime = MPI::Wtime();
+    
+    if (procId != 0)
+    { // compute scan
+        if (procId == 1)
+        {
+            D = opD(D,S);
+        }
+        for (int j = 0; j <= log2(lenNum1)-1; j++)
+        { // up-sweep
+            int stepRec = pow(2,j+1);
+            int stepSend = pow(2,j);
+
+            if (procId%stepRec != 0 && procId%stepSend == 0 && procId+stepSend < numProcs)
+            {
+	            MPI_Send(&D, 1, MPI_INT, procId+stepSend, TAG, MPI_COMM_WORLD);
+            }
+
+            if (procId%stepRec == 0 && procId-stepSend > 0)
+            {
+                DTYPE temp = UNDEF;
+	            MPI_Recv(&temp, 1, MPI_INT, procId-stepSend, TAG, MPI_COMM_WORLD, &stat);
+                D = opD(D,temp);
+            }
+        }
+
+        DTYPE reduce = UNDEF;
+        if (procId == numProcs -1)
+        {
+            reduce = D;
+            D = S;
+        }
+
+        for (int j = log2(lenNum1)-1; j >= 0; j--)
+        { // down-sweep
+            int stepParent = pow(2,j+1);
+            int stepLeft = pow(2,j);
+
+            if (procId%stepParent != 0 && procId%stepLeft == 0 && procId+stepLeft < numProcs)
+            { // left sends its value and receives value of parent
+	            MPI_Send(&D, 1, MPI_INT, procId+stepLeft, TAG, MPI_COMM_WORLD);
+	            MPI_Recv(&D, 1, MPI_INT, procId+stepLeft, TAG, MPI_COMM_WORLD, &stat);
+            }
+
+            if (procId%stepParent == 0 && procId-stepLeft > 0)
+            { // parent receives from left and sends its number back
+                DTYPE temp = UNDEF;
+	            MPI_Recv(&temp, 1, MPI_INT, procId-stepLeft, TAG, MPI_COMM_WORLD, &stat);
+	            MPI_Send(&D, 1, MPI_INT, procId-stepLeft, TAG, MPI_COMM_WORLD);
+                D = opD(temp,D);
+            }
+        }
+
+        if (procId > 1)
+        {
+	        MPI_Send(&D, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD);
+        }
+        if (procId < numProcs-1)
+        {
+	        MPI_Recv(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD, &stat);
+        }
+        else if (procId == numProcs-1)
+        {
+            D = reduce;
+        }
+
+        int C = UNDEFINED;
+
+        if (procId < numProcs-1)
+        {
+            MPI_Send(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
+        }
+        if (procId > 1)
+        {
+            DTYPE temp = UNDEF;
+            MPI_Recv(&temp, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
+            if (temp == G)
+            {
+                C = 1;
+            }
+            else if (temp == S)
+            {
+                C = 0;
+            }
+        }
+        else if (procId == 1)
+        {
+            C = 0;
+        }
+
+        int Z = nand(C,nand(X,Y));
+
+        if (procId == lenNum1 && D == P)
+        {
+            std::cout  <<  "overflow"  <<  std::endl;
+        }
+
+        std::cout  <<  procId  <<  ":"  <<  Z  <<   std::endl;
+    }
 
     
     
