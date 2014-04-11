@@ -3,8 +3,8 @@ import sys
 
 def getBin(numStr):
     xr = ""
-    for i in xb:
-        if i == 0:
+    for i in numStr:
+        if i == '0':
             xr += chr(0)
         else:
             xr += chr(1)
@@ -19,11 +19,11 @@ y = random.randint(pow(2,i),pow(2,i+1)-1)
 xb = "{0:b}".format(x)
 yb = "{0:b}".format(y)
 x = lambda x,y: (bin(int(x,2)+int(y,2))[2:])
-#f.write(getBin(xb))
-f.write(xb)
+f.write(getBin(xb))
+#f.write(xb)
 f.write('\n')
-#f.write(getBin(yb))
-f.write(yb)
+f.write(getBin(yb))
+#f.write(yb)
 op = open("operands",'w')
 op.write(xb)
 op.write('\n')
