@@ -15,9 +15,9 @@ const int UNDEFINED = -1;
 
 typedef enum dtype {UNDEF=-1, P, S, G} DTYPE;
 
-void sendToEveryoneInt(int *what, int procs)
+void sendMasterToEveryoneInt(int *what, int procs)
 {
-	for (int i=0; i < procs; i++)
+	for (int i=1; i < procs; i++)
     {
 		MPI_Send(what, 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
     }
@@ -69,7 +69,8 @@ int main(int argc, char *argv[])
 
     int lenNum1 = num1.size();
     int lenNum2 = num2.size();
- 
+    int realSize = 0;
+    
     // Initialize MPI
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
@@ -103,17 +104,29 @@ int main(int argc, char *argv[])
             std::cout  << number  <<   " ";
     	}
     	std::cout << std::endl;
+
+        realSize = num1.size();
+        while (num1.size() < numProcs-1)
+        {
+            num1.insert(num1.begin(),0);
+            num2.insert(num2.begin(),0);
+        }
         lenNum1 = num1.size();
         lenNum2 = num2.size();
-        sendToEveryoneInt(&lenNum1, numProcs);
-        sendToEveryoneInt(&lenNum2, numProcs);
+        sendMasterToEveryoneInt(&realSize, numProcs);
+        sendMasterToEveryoneInt(&lenNum1, numProcs);
+        sendMasterToEveryoneInt(&lenNum2, numProcs);
     }
 
-	MPI_Recv(&lenNum1, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
-	MPI_Recv(&lenNum2, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+    if (procId != 0)
+    { // slaves get information about size of real input
+    	MPI_Recv(&realSize, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+    	MPI_Recv(&lenNum1, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+    	MPI_Recv(&lenNum2, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
+    }
 
     if (lenNum1 != lenNum2 || lenNum1+1 != numProcs)
-    {
+    { // check if input is correct
         if (procId == 0)
         {
             std::cerr  << "Wrong number of CPU or length of numbers is not same"  <<  std::endl;
@@ -122,6 +135,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    // start computing result
     int X = UNDEFINED;
     int Y = UNDEFINED;
     DTYPE D = UNDEF;
@@ -232,12 +246,15 @@ int main(int argc, char *argv[])
 
         int Z = nand(C,nand(X,Y));
 
-        if (procId == lenNum1 && D == P)
-        {
+        if (procId == realSize && D == P)
+        { // check overflow on original maximal size bit
             std::cout  <<  "overflow"  <<  std::endl;
         }
 
-        std::cout  <<  procId  <<  ":"  <<  Z  <<   std::endl;
+        if (procId <= realSize && procId > 0)
+        {
+            std::cout  <<  procId  <<  ":"  <<  Z  <<   std::endl;
+        }
     }
 
     
