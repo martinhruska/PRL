@@ -100,8 +100,18 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-    		actNum->push_back(number);
-            std::cout  << number  <<   " ";
+            if (number == '0')
+            {
+    		    actNum->push_back(0);
+                std::cout  << 0  <<   " ";
+            }
+            else
+            {
+    		    actNum->push_back(1);
+                std::cout  << 1  <<   " ";
+            }
+    		//actNum->push_back(number);
+            //std::cout  << number  <<   " ";
     	}
     	std::cout << std::endl;
 
