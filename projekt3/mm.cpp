@@ -15,6 +15,7 @@ const int UNDEFINED = -1;
 
 typedef enum dtype {UNDEF=-1, P, S, G} DTYPE;
 
+// Master sends message to everyone
 void sendMasterToEveryoneInt(int *what, int procs)
 {
 	for (int i=1; i < procs; i++)
@@ -23,11 +24,13 @@ void sendMasterToEveryoneInt(int *what, int procs)
     }
 }
 
+// Realization of nand function
 int nand(int o1, int o2)
 {
     return (o1-o2)*(o1-o2);
 }
 
+// Returns initialized D value
 DTYPE initD(int X, int Y)
 {
     if (X == 1 && Y == 1)
@@ -38,6 +41,7 @@ DTYPE initD(int X, int Y)
         return P;
 }
 
+// perform operation over D
 DTYPE opD(DTYPE o1, DTYPE o2)
 {
     if (o1 == S)
@@ -48,6 +52,7 @@ DTYPE opD(DTYPE o1, DTYPE o2)
         return G;
 }
 
+// internal function for translating D value
 char trans(DTYPE d)
 {
     if (d == S)
@@ -64,9 +69,10 @@ int main(int argc, char *argv[])
     int numProcs;
     int procId;
     MPI_Status stat;
-    Num num1 = Num();
-    Num num2 = Num();
+    Num num1 = Num(); // number1
+    Num num2 = Num(); // number2
 
+    // Just initialization of length values
     int lenNum1 = num1.size();
     int lenNum2 = num2.size();
     int realSize = 0;
@@ -75,8 +81,6 @@ int main(int argc, char *argv[])
     MPI_Init(&argc,&argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
     MPI_Comm_rank(MPI_COMM_WORLD, &procId);
-	       // MPI_Send(&y, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
-			//MPI_Recv(&y, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
 
     if (procId == 0)
     { // master reads input
@@ -100,7 +104,6 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            /*
             if (number == '0')
             {
     		    actNum->push_back(0);
@@ -111,9 +114,9 @@ int main(int argc, char *argv[])
     		    actNum->push_back(1);
                 std::cout  << 1  <<   " ";
             }
-            */
-    		actNum->push_back(number);
-            std::cout  << number  <<   " ";
+            // Uncommnet for input in bytes
+    		//actNum->push_back(number);
+            //std::cout  << number  <<   " ";
     	}
     	std::cout << std::endl;
 
@@ -125,7 +128,9 @@ int main(int argc, char *argv[])
         }
         lenNum1 = num1.size();
         lenNum2 = num2.size();
-        sendMasterToEveryoneInt(&realSize, numProcs);
+        // sends length of input to others
+        sendMasterToEveryoneInt(&realSize, numProcs); // real length
+        // length after extension with zeros
         sendMasterToEveryoneInt(&lenNum1, numProcs);
         sendMasterToEveryoneInt(&lenNum2, numProcs);
     }
@@ -153,7 +158,7 @@ int main(int argc, char *argv[])
     DTYPE D = UNDEF;
 
     if (procId == 0)
-    {
+    { // master sends bits of input to slaves
         for (int i=1, j=lenNum1; i < numProcs; ++i,--j)
         {
 	        MPI_Send(&num1[j-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
@@ -161,7 +166,7 @@ int main(int argc, char *argv[])
         }
     }
     else
-    {
+    { // slaves receives input
 	    MPI_Recv(&X, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
 	    MPI_Recv(&Y, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
         D = initD(X,Y);
@@ -169,7 +174,7 @@ int main(int argc, char *argv[])
     //double startTime = MPI::Wtime();
     
     if (procId != 0)
-    { // compute scan
+    { // compute scan on d values
         if (procId == 1)
         {
             D = opD(D,S);
@@ -194,7 +199,7 @@ int main(int argc, char *argv[])
 
         DTYPE reduce = UNDEF;
         if (procId == numProcs -1)
-        {
+        { // processor with msb set neutral values and saves result of reduce
             reduce = D;
             D = S;
         }
@@ -219,6 +224,7 @@ int main(int argc, char *argv[])
             }
         }
 
+        // Shift to left
         if (procId > 1)
         {
 	        MPI_Send(&D, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD);
@@ -228,12 +234,13 @@ int main(int argc, char *argv[])
 	        MPI_Recv(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD, &stat);
         }
         else if (procId == numProcs-1)
-        {
+        { // msb processor sets result of reduce
             D = reduce;
         }
 
         int C = UNDEFINED;
 
+        // propagete bytes
         if (procId < numProcs-1)
         {
             MPI_Send(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
@@ -258,7 +265,7 @@ int main(int argc, char *argv[])
 
         int Z = nand(C,nand(X,Y));
 
-        if (procId == realSize && D == P)
+        if (procId == realSize && D == G)
         { // check overflow on original maximal size bit
             std::cout  <<  "overflow"  <<  std::endl;
         }
