@@ -1,10 +1,13 @@
+#!/bin/bash
+
 for i in $(seq 1 $1)
 do
     python myTest.py $i > py_res
-    bash test.sh $i > temp_res
+    procs=$(($i+1))
+    bash test.sh $procs > temp_res
     python parseOut.py temp_res > my_res
     res=`diff my_res py_res`
-    if [ $res == ""]
+    if [[ $res == "" ]]
         then
             echo "TEST $i [OK]"
         else
@@ -13,6 +16,7 @@ do
             echo ""
             echo "RESULTS:"
             cat py_res
+            echo "----"
             cat my_res
             echo "---"
     fi

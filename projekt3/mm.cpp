@@ -24,8 +24,8 @@ void sendMasterToEveryoneInt(int *what, int procs)
     }
 }
 
-// Realization of nand function
-int nand(int o1, int o2)
+// Realization of xor function
+int mxor(int o1, int o2)
 {
     return (o1-o2)*(o1-o2);
 }
@@ -100,25 +100,25 @@ int main(int argc, char *argv[])
             if (number == '\n')
             { // end of line
                 actNum = &num2;
-                std::cout  <<  std::endl;
+                //std::cout  <<  std::endl;
                 continue;
             }
 
             if (number == '0')
             {
     		    actNum->push_back(0);
-                std::cout  << 0  <<   " ";
+                //std::cout  << 0  <<   " ";
             }
             else
             {
     		    actNum->push_back(1);
-                std::cout  << 1  <<   " ";
+                //std::cout  << 1  <<   " ";
             }
             // Uncommnet for input in bytes
     		//actNum->push_back(number);
             //std::cout  << number  <<   " ";
     	}
-    	std::cout << std::endl;
+    	//std::cout << std::endl;
 
         realSize = num1.size();
         while (num1.size() < numProcs-1)
@@ -156,6 +156,8 @@ int main(int argc, char *argv[])
     int X = UNDEFINED;
     int Y = UNDEFINED;
     DTYPE D = UNDEF;
+    
+    double startTime = MPI::Wtime();
 
     if (procId == 0)
     { // master sends bits of input to slaves
@@ -171,7 +173,6 @@ int main(int argc, char *argv[])
 	    MPI_Recv(&Y, 1, MPI_INT, 0, TAG, MPI_COMM_WORLD, &stat);
         D = initD(X,Y);
     }
-    //double startTime = MPI::Wtime();
     
     if (procId != 0)
     { // compute scan on d values
@@ -240,7 +241,7 @@ int main(int argc, char *argv[])
 
         int C = UNDEFINED;
 
-        // propagete bytes
+        // propagate bytes
         if (procId < numProcs-1)
         {
             MPI_Send(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
@@ -263,8 +264,11 @@ int main(int argc, char *argv[])
             C = 0;
         }
 
-        int Z = nand(C,nand(X,Y));
+        int Z = mxor(C,mxor(X,Y));
+    
+        double endTime = MPI::Wtime();
 
+        /*
         if (procId == realSize && D == G)
         { // check overflow on original maximal size bit
             std::cout  <<  "overflow"  <<  std::endl;
@@ -273,6 +277,11 @@ int main(int argc, char *argv[])
         if (procId <= realSize && procId > 0)
         {
             std::cout  <<  procId  <<  ":"  <<  Z  <<   std::endl;
+        }
+        */
+        if (procId == numProcs-1)
+        {
+            std::cout  <<  realSize  <<  " "  << endTime - startTime  <<  std::endl;
         }
     }
 
