@@ -14,7 +14,7 @@ def getBin(numStr):
 
 
 i = int(sys.argv[1])
-
+print i
 f = open("numbers",'w')
 x = random.randint(pow(2,i),pow(2,i+1)-1)
 y = random.randint(pow(2,i),pow(2,i+1)-1)

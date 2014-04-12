@@ -268,7 +268,6 @@ int main(int argc, char *argv[])
     
         double endTime = MPI::Wtime();
 
-        /*
         if (procId == realSize && D == G)
         { // check overflow on original maximal size bit
             std::cout  <<  "overflow"  <<  std::endl;
@@ -278,11 +277,12 @@ int main(int argc, char *argv[])
         {
             std::cout  <<  procId  <<  ":"  <<  Z  <<   std::endl;
         }
-        */
+        /*
         if (procId == numProcs-1)
         {
             std::cout  <<  realSize  <<  " "  << endTime - startTime  <<  std::endl;
         }
+        */
     }
 
     
