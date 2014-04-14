@@ -63,6 +63,11 @@ char trans(DTYPE d)
         return 'G';
 }
 
+int transform(int id, int num)
+{
+    return num-id;
+}
+
 int main(int argc, char *argv[])
 {
     typedef std::vector<int> Num;
@@ -163,8 +168,8 @@ int main(int argc, char *argv[])
     { // master sends bits of input to slaves
         for (int i=1, j=lenNum1; i < numProcs; ++i,--j)
         {
-	        MPI_Send(&num1[j-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
-	        MPI_Send(&num2[j-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&num1[i-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
+	        MPI_Send(&num2[i-1], 1, MPI_INT, i, TAG, MPI_COMM_WORLD);
         }
     }
     else
@@ -180,61 +185,68 @@ int main(int argc, char *argv[])
         {
             D = opD(D,S);
         }
+        //std::cout  <<  procId << " "  <<  "up sweep"  <<  std::endl;
+
         for (int j = 0; j <= log2(lenNum1)-1; j++)
         { // up-sweep
             int stepRec = pow(2,j+1);
             int stepSend = pow(2,j);
 
-            if (procId%stepRec != 0 && procId%stepSend == 0 && procId+stepSend < numProcs)
+            if (transform(procId,numProcs)%stepRec != 0 && transform(procId,numProcs)%stepSend == 0 && procId-stepSend >0)
             {
-	            MPI_Send(&D, 1, MPI_INT, procId+stepSend, TAG, MPI_COMM_WORLD);
+                MPI_Send(&D, 1, MPI_INT, procId-stepSend, TAG, MPI_COMM_WORLD);
             }
 
-            if (procId%stepRec == 0 && procId-stepSend > 0)
+            if (transform(procId,numProcs)%stepRec == 0 && procId+stepSend > numProcs)
             {
                 DTYPE temp = UNDEF;
-	            MPI_Recv(&temp, 1, MPI_INT, procId-stepSend, TAG, MPI_COMM_WORLD, &stat);
+                MPI_Recv(&temp, 1, MPI_INT, procId+stepSend, TAG, MPI_COMM_WORLD, &stat);
                 D = opD(D,temp);
             }
         }
 
         DTYPE reduce = UNDEF;
-        if (procId == numProcs -1)
+        if (procId == 1)
         { // processor with msb set neutral values and saves result of reduce
             reduce = D;
             D = S;
         }
+
+        //std::cout  <<  procId << " "  <<  "down sweep "  << log2(lenNum1)-1  <<  std::endl;
 
         for (int j = log2(lenNum1)-1; j >= 0; j--)
         { // down-sweep
             int stepParent = pow(2,j+1);
             int stepLeft = pow(2,j);
 
-            if (procId%stepParent != 0 && procId%stepLeft == 0 && procId+stepLeft < numProcs)
+            if (transform(procId,numProcs)%stepParent != 0 && transform(procId,numProcs)%stepLeft == 0 && procId-stepLeft > 0)
             { // left sends its value and receives value of parent
-	            MPI_Send(&D, 1, MPI_INT, procId+stepLeft, TAG, MPI_COMM_WORLD);
-	            MPI_Recv(&D, 1, MPI_INT, procId+stepLeft, TAG, MPI_COMM_WORLD, &stat);
+                MPI_Send(&D, 1, MPI_INT, procId-stepLeft, TAG, MPI_COMM_WORLD);
+                MPI_Recv(&D, 1, MPI_INT, procId-stepLeft, TAG, MPI_COMM_WORLD, &stat);
             }
 
-            if (procId%stepParent == 0 && procId-stepLeft > 0)
+            if (transform(procId,numProcs)%stepParent == 0 && procId+stepLeft < numProcs)
             { // parent receives from left and sends its number back
                 DTYPE temp = UNDEF;
-	            MPI_Recv(&temp, 1, MPI_INT, procId-stepLeft, TAG, MPI_COMM_WORLD, &stat);
-	            MPI_Send(&D, 1, MPI_INT, procId-stepLeft, TAG, MPI_COMM_WORLD);
+                MPI_Recv(&temp, 1, MPI_INT, procId+stepLeft, TAG, MPI_COMM_WORLD, &stat);
+                MPI_Send(&D, 1, MPI_INT, procId+stepLeft, TAG, MPI_COMM_WORLD);
                 D = opD(temp,D);
             }
         }
 
-        // Shift to left
-        if (procId > 1)
-        {
-	        MPI_Send(&D, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD);
-        }
+        //std::cout  <<  procId  <<  " shifting"  <<  std::endl;
+        // Shift to right
         if (procId < numProcs-1)
         {
-	        MPI_Recv(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD, &stat);
+	        MPI_Send(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
+            std::cout  <<  procId+1  <<  " should "  << trans(D)  <<  std::endl;
         }
-        else if (procId == numProcs-1)
+        if (procId > 1)
+        {
+	        MPI_Recv(&D, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
+            std::cout  <<  procId  <<  " rec "  << trans(D)  <<  std::endl;
+        }
+        else if (procId == 1)
         { // msb processor sets result of reduce
             D = reduce;
         }
@@ -242,14 +254,14 @@ int main(int argc, char *argv[])
         int C = UNDEFINED;
 
         // propagate bytes
-        if (procId < numProcs-1)
-        {
-            MPI_Send(&D, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD);
-        }
         if (procId > 1)
         {
+            MPI_Send(&D, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD);
+        }
+        if (procId < numProcs-1)
+        {
             DTYPE temp = UNDEF;
-            MPI_Recv(&temp, 1, MPI_INT, procId-1, TAG, MPI_COMM_WORLD, &stat);
+            MPI_Recv(&temp, 1, MPI_INT, procId+1, TAG, MPI_COMM_WORLD, &stat);
             if (temp == G)
             {
                 C = 1;
@@ -259,10 +271,11 @@ int main(int argc, char *argv[])
                 C = 0;
             }
         }
-        else if (procId == 1)
+        else if (procId == numProcs-1)
         {
             C = 0;
         }
+        //std::cout  <<  procId  <<  " final"  <<  std::endl;
 
         int Z = mxor(C,mxor(X,Y));
     
