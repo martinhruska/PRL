@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
         if (procId == numProcs -1)
         { // processor with msb set neutral values and saves result of reduce
             reduce = D;
-            D = S;
+            D = P;
         }
 
         for (int j = log2(lenNum1)-1; j >= 0; j--)

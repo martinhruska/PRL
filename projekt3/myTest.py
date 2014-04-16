@@ -14,10 +14,11 @@ def getBin(numStr):
 
 
 i = int(sys.argv[1])
-print i
 f = open("numbers",'w')
-x = random.randint(pow(2,i),pow(2,i+1)-1)
-y = random.randint(pow(2,i),pow(2,i+1)-1)
+#x = random.randint(pow(2,i),pow(2,i+1)-1)
+#y = random.randint(pow(2,i),pow(2,i+1)-1)
+x = 4
+y = 5
 xb = "{0:b}".format(x)
 yb = "{0:b}".format(y)
 x = lambda x,y: (bin(int(x,2)+int(y,2))[2:])

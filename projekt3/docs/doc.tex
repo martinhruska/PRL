@@ -25,10 +25,19 @@
 Algoritmus \emph{Carry Look Ahead Parallel Binary Adder} je určen pro paralelní sčítání dvou binárních čísel.
 Tento dokument popisuje jeho implementaci v~jazyce C++ za použití knihovny \emph{openMPI} a následné experimenty
 provedené s~touto implementací.
+
+Na vstupu bude implementovaný program očekávat dvě binární čísla o~stejném počtu bitu zapsané na samostatných
+řádcích v~souboru \emph{numbers} a výstupem bude výpis dvojic $id:bit$, kde $id$ je identifikátor procesoru
+a $bit$ je hodnota bitu výsledného čísla.
+Procesor s~nejnižší hodnotou identifikátoru bude vypisovat nejméně významný bit výsledku.
+Dále také může být vypsán řetězec \emph{overflow} pro signalizaci přetečení výsledku.
+
+\begin{comment}
 Jako první bude algoritmus stručně popsán (sekce \ref{sec:analysis}) a bude analyzována jeho teoretická složitost.
 Dále budou popsány některé části implementace (sekce \ref{sec:analysis}), následované popisem experimentů
 provedených za účelem měření jeho reálné výpočetní náročnosti (sekce \ref{sec:exprmts}).
 Na závěr bude uveden sekvenční diagram popisují komunikaci procesorů při samotném výpočtu.
+\end{comment}
 
 \section{Popis a analýza algoritmu}
 \label{sec:analysis}
@@ -79,8 +88,8 @@ Algoritmus byl implementován s~použitím jednoho procesoru navíc oproti popis
 Tento procesor plní roli \emph{mastera}, načítá vstupní posloupnost a posílá ostatním procesorům příslušné bity
 ze vstupních čísel tak, že procesoru na pozici $1$ je přidělen nejméně významný bit apod.
 
-Pokud jsou na vstupu čísla s~počtem bitu, který není roven žádné mocnině dvou, jsou doplněny zleva nulami,
-tak aby počet bitů byl roven nejbližší mocnině dvou vyšší, než byl původní počet bitů.
+Pokud jsou na vstupu čísla s~počtem bitu, který není roven žádné mocnině dvou, jsou doplněny zleva nulami tak,
+aby počet bitů byl roven nejbližší mocnině dvou vyšší, než byl původní počet bitů.
 
 \section{Experimenty}
 \label{sec:exprmts}
