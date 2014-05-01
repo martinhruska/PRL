@@ -80,7 +80,7 @@ bude mít složitost $\log{2^{\lceil \log_{2}{n} \rceil}}$ (kde $n$ je počet bi
 je v~$O(\log{n})$.
 Algoritmus má tedy časovou složitost $4+O(\log{n})=O(\log{n})$.
 Pro počet procesorů nutných pro výpočet je $2^{\lceil \log_{2}{n} \rceil}=O(n)$
-a cena výpočtu je tedy $c(n)=O(\log{n})*O(\log{n})$, což není optimální.
+a cena výpočtu je tedy $c(n)=O(n)*O(\log{n})$, což není optimální.
 
 \section{Implementace}
 \label{sec:impl}
@@ -98,8 +98,8 @@ trvalo sečtení dvou čísel o~zadaném počtu bitů.
 Čas byl měřen pomocí metody \emph{MPI::Wtime} z~knihovny \emph{openMPI}
 a byl měřen výpočet bez načtení vstupních hodnoty a vypsání výstupu,
 aby tyto vstupně výstupní operace nezkreslovaly dobu potřebou pro samotný výpočet.
-Měření byla provedena na na počítači s~procesorem Intel Core 2 Duo (2.13 GHz) a 4 GiB paměti.
-Výsledky měření jsou průměrem z~šestnásti na sobě nezávislých měření.
+Měření byla provedena na počítači s~procesorem Intel Core 2 Duo (2.13 GHz) a 4 GiB paměti.
+Výsledky měření jsou průměrem z~šestnácti na sobě nezávislých měření.
 
 Výsledky lze vidět na grafu \ref{fig:res}.
 Na ose $x$ je počet bitů sčítaných čísel a na ose $y$ doba v~sekundách,
@@ -109,7 +109,7 @@ pak průběh funkce $0.008*log(n)$, která byla empiricky odvozena
 a která má ilustrovat složitost $O(\log{n})$, jež by měl mít výpočet teoreticky.
 Jelikož počet procesorů nutný k~výpočtu je vždy $2^x$, kde $x$ je nějaké přirozené číslo,
 byla měřena doba výpočtu pro součet čísel, která mají $2^x$ bitů.
-Čísla s~jiným počtem bitů jsou doplněna nulami tak, aby měla požadavonou délku, tudíž
+Čísla s~jiným počtem bitů jsou doplněna nulami tak, aby měla požadovanou délku, tudíž
 by se u~nich časová náročnost výpočtu nelišila.
 Byly měřeny hodnoty pro vstupy o~délce maximálně $64$ bitů, což je výpočetní a systémový limit testovacího
 stroje.

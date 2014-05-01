@@ -114,8 +114,6 @@ int main(int argc, char *argv[])
     		    actNum->push_back(1);
                 //std::cout  << 1  <<   " ";
             }
-            // Uncommnet for input in bytes
-    		//actNum->push_back(number);
             //std::cout  << number  <<   " ";
     	}
     	//std::cout << std::endl;
